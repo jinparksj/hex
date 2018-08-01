@@ -1,1 +1,0 @@
-controller_joint_names: ['RF_Coxa', 'RF_Femur', 'RF_Tibia', 'RM_Coxa', 'RM_Femur', 'RM_Tibia', 'RR_Coxa', 'RR_Femur', 'RR_Tibia', 'LR_Coxa', 'LR_Femur', 'LR_Tibia', 'LM_Coxa', 'LM_Femur', 'LM_Tibia', 'LF_Coxa', 'LF_Femur', 'LF_Tibia', ]
