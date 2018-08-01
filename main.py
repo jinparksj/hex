@@ -22,6 +22,8 @@ ALREADY_INITIALIZED = set()
 
 def parse():
     parser = argparse.ArgumentParser()
+
+    """Need to add model type because need different xml files for silvia with one leg two leg etc"""
     parser.add_argument('--render', '-r', action='store_true', help='Render')
     parser.add_argument('-roll', type=int, default=20, help='Number of rollouts')
     parser.add_argument('-max_time_step', '-max', type=int, help='Max time step')
@@ -41,7 +43,7 @@ def gen_data(args, m=None):
         returns = []
         observations = []
         actions = []
-        for i in range(args.run):
+        for i in range(args.roll):
             print('gen iter', i+1)
             obs = env.reset()
             done = False
