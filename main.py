@@ -21,6 +21,7 @@ ALREADY_INITIALIZED = set()
 
 
 def parse():
+    """Pass in arguments form user"""
     parser = argparse.ArgumentParser()
 
     """Need to add model type because need different xml files for 
