@@ -6,7 +6,7 @@ import os
 
 class SixLeggedEnv(mujoco_env.MujocoEnv, utils.EzPickle):
     def __init__(self):
-        xml_path = os.path.split(os.path.realpath(__file__))[0]+"/silvia.xml"
+        xml_path = os.path.split(os.path.realpath(__file__))[0]+"/silvia1.xml"
         mujoco_env.MujocoEnv.__init__(self, xml_path, 5)
         utils.EzPickle.__init__(self)
 
