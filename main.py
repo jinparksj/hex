@@ -23,12 +23,8 @@ ALREADY_INITIALIZED = set()
 def parse():
     """Pass in arguments form user"""
     parser = argparse.ArgumentParser()
-
-    """Need to add model type because need different xml files for 
-    can have silvia1 for one leg etc so that only need to add -leg arg
-    silvia with one leg two leg etc"""
     parser.add_argument('--render', '-r', action='store_true', help='Render')
-    parser.add_argument('-roll', type=int, default=20, help='Number of rollouts')
+    parser.add_argument('-roll', type=int, default=20, help='   Number of rollouts')
     parser.add_argument('-max_time_step', '-max', type=int, help='Max time step')
     args = parser.parse_args()
     return args
