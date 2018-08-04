@@ -1,5 +1,4 @@
 #! usr/bin/env python
-
 """
 Gabriel Fernandez
 github.com/gabriel80808
@@ -21,8 +20,9 @@ ALREADY_INITIALIZED = set()
 
 
 def parse():
-    """Pass in arguments form user"""
+    """Pass in arguments form user for experiments"""
     parser = argparse.ArgumentParser()
+    parser.add_argument('--legs', '-l', type=int, default=1, help='No. Legs: 1, 2, 3, 4, 5, 6, 11, 22, 33')
     parser.add_argument('--render', '-r', action='store_true', help='Render')
     parser.add_argument('-roll', type=int, default=20, help='   Number of rollouts')
     parser.add_argument('-max_time_step', '-max', type=int, help='Max time step')
@@ -36,7 +36,7 @@ def gen_data(args, m=None):
         tf.get_default_session().run(tf.variables_initializer(new_variables))
         ALREADY_INITIALIZED.update(new_variables)
 
-        env = SixLeggedEnv()
+        env = SixLeggedEnv(args.legs)
         max_steps = args.max_time_step or 200
 
         returns = []
