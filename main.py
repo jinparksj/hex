@@ -12,18 +12,16 @@ Usage Example:
     python main.py --legs 1 --render -roll 20 -max_time_step 2000
 """
 
+from sql_replay_buffer import SimpleReplayBuffer
+from policies import StochasticNNPolicy
 from six_legged_env import SixLeggedEnv
-from replay_buffer import ReplayBuffer
-from schedules import LinearSchedule
-from utils import ObservationInput
-from graphs import build_train
+from value_functions import NNQFunction
+from sampler import SimpleSampler
+from sql import SQLAlgorithm
 import tensorflow.contrib.layers as layers
 import tensorflow as tf
-import numpy as np
 import argparse
-import tf_util
-import logger
-import itertools
+
 
 
 SHARED_PARAMS = {
@@ -43,7 +41,6 @@ SHARED_PARAMS = {
     'snapshot_mode': 'last',
     'snapshot_gap': 100,
 }
-
 ENV_PARAMS = {
     1: {  # 3 DoF
         'prefix': '1L',
@@ -113,7 +110,6 @@ ENV_PARAMS = {
         'reward_scale': 100,
     }
 }
-
 DEFAULT_ENV = 1
 AVAILABLE_ENVS = list(ENV_PARAMS.keys())
 
@@ -145,57 +141,38 @@ if __name__ == '__main__':
     params = SHARED_PARAMS
     params.update(env_params)
 
-    with tf_util.make_session():
-        env = SixLeggedEnv(args.legs)
+    env = SixLeggedEnv(args.legs)
+    policy = StochasticNNPolicy
+    qf = NNQFunction
+    pool = SimpleReplayBuffer
+    sampler = SimpleSampler
 
-        # Create all the functions necessary to train the model
-        act, train, update_target, debug = build_train(
-            make_obs_ph=lambda name: ObservationInput(env.observation_space, name=name),
-            q_func=model,
-            num_actions=env.action_space.n,
-            optimizer=tf.train.AdamOptimizer(learning_rate=5e-4),
-        )
-        # Create the replay buffer
-        replay_buffer = ReplayBuffer(50000)
-        # Create the schedule for exploration starting from 1 (every action is random) down to
-        # 0.02 (98% of actions are selected according to values predicted by the model).
-        exploration = LinearSchedule(schedule_timesteps=10000, initial_p=1.0, final_p=0.02)
+    algo = SQLAlgorithm(
+           env,
+           policy,
+           qf,
+           pool,
+           sampler,
+           n_epochs=1000,
+           n_train_repeat=1,
+           epoch_length=1000,
+           eval_n_episodes=10,
+           eval_render=False,
+           plotter=None,
+           policy_lr=1E-3,
+           qf_lr=1E-3,
+           value_n_particles=16,
+           td_target_update_interval=1,
+           kernel_fn=adaptive_isotropic_gaussian_kernel,
+           kernel_n_particles=16,
+           kernel_update_ratio=0.5,
+           discount=0.99,
+           reward_scale=1,
+           use_saved_qf=False,
+           use_saved_policy=False,
+           save_full_state=False,
+           train_qf=True,
+           train_policy=True
+           )
 
-        # Initialize the parameters and copy them to the target network.
-        tf_util.initialize()
-        update_target()
-
-        episode_rewards = [0.0]
-        obs = env.reset()
-        for t in itertools.count():
-            # Take action and update exploration to the newest value
-            action = act(obs[None], update_eps=exploration.value(t))[0]
-            new_obs, rew, done, _ = env.step(action)
-            # Store transition in the replay buffer.
-            replay_buffer.add(obs, action, rew, new_obs, float(done))
-            obs = new_obs
-
-            episode_rewards[-1] += rew
-            if done:
-                obs = env.reset()
-                episode_rewards.append(0)
-
-            is_solved = t > 100 and np.mean(episode_rewards[-101:-1]) >= 200
-            if is_solved:
-                # Show off the result
-                env.render()
-            else:
-                # Minimize the error in Bellman's equation on a batch sampled from replay buffer.
-                if t > 1000:
-                    obses_t, actions, rewards, obses_tp1, dones = replay_buffer.sample(32)
-                    train(obses_t, actions, rewards, obses_tp1, dones, np.ones_like(rewards))
-                # Update target network periodically.
-                if t % 1000 == 0:
-                    update_target()
-
-            if done and len(episode_rewards) % 10 == 0:
-                logger.record_tabular("steps", t)
-                logger.record_tabular("episodes", len(episode_rewards))
-                logger.record_tabular("mean episode reward", round(np.mean(episode_rewards[-101:-1]), 1))
-                logger.record_tabular("% time spent exploring", int(100 * exploration.value(t)))
-                logger.dump_tabular()
+    algo.train()

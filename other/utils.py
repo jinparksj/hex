@@ -1,4 +1,4 @@
-from input import observation_input
+from other.input import observation_input
 
 import tensorflow as tf
 

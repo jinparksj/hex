@@ -2,10 +2,9 @@
 Credit to OpenAI baselines
 """
 
-import numpy as np
 import random
 
-from segment_tree import SumSegmentTree, MinSegmentTree
+from other.segment_tree import SumSegmentTree, MinSegmentTree
 
 
 class ReplayBuffer(object):
@@ -192,3 +191,4 @@ class PrioritizedReplayBuffer(ReplayBuffer):
             self._it_min[idx] = priority ** self._alpha
 
             self._max_priority = max(self._max_priority, priority)
+

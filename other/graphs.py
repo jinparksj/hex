@@ -100,7 +100,7 @@ The functions in this file can are used to create the following functions:
 
 
 import tensorflow as tf
-import tf_util
+from other import tf_util
 
 
 def scope_vars(scope, trainable_only=False):
@@ -198,9 +198,9 @@ def build_act(make_obs_ph, q_func, num_actions, scope="deepq", reuse=None):
         output_actions = tf.cond(stochastic_ph, lambda: stochastic_actions, lambda: deterministic_actions)
         update_eps_expr = eps.assign(tf.cond(update_eps_ph >= 0, lambda: update_eps_ph, lambda: eps))
         _act = tf_util.function(inputs=[observations_ph, stochastic_ph, update_eps_ph],
-                         outputs=output_actions,
-                         givens={update_eps_ph: -1.0, stochastic_ph: True},
-                         updates=[update_eps_expr])
+                                outputs=output_actions,
+                                givens={update_eps_ph: -1.0, stochastic_ph: True},
+                                updates=[update_eps_expr])
         def act(ob, stochastic=True, update_eps=-1):
             return _act(ob, stochastic, update_eps)
         return act
@@ -313,9 +313,9 @@ def build_act_with_param_noise(make_obs_ph, q_func, num_actions, scope="deepq", 
             update_param_noise_threshold_expr,
         ]
         _act = tf_util.function(inputs=[observations_ph, stochastic_ph, update_eps_ph, reset_ph, update_param_noise_threshold_ph, update_param_noise_scale_ph],
-                         outputs=output_actions,
-                         givens={update_eps_ph: -1.0, stochastic_ph: True, reset_ph: False, update_param_noise_threshold_ph: False, update_param_noise_scale_ph: False},
-                         updates=updates)
+                                outputs=output_actions,
+                                givens={update_eps_ph: -1.0, stochastic_ph: True, reset_ph: False, update_param_noise_threshold_ph: False, update_param_noise_scale_ph: False},
+                                updates=updates)
         def act(ob, reset, update_param_noise_threshold, update_param_noise_scale, stochastic=True, update_eps=-1):
             return _act(ob, stochastic, update_eps, reset, update_param_noise_threshold, update_param_noise_scale)
         return act
@@ -454,3 +454,60 @@ def build_train(make_obs_ph, q_func, num_actions, optimizer, grad_norm_clipping=
         q_values = tf_util.function([obs_t_input], q_t)
 
         return act_f, train, update_target, {'q_values': q_values}
+
+    """
+    with tf_util.make_session():
+        env = SixLeggedEnv(args.legs)
+
+        # Create all the functions necessary to train the model
+        act, train, update_target, debug = build_train(
+            make_obs_ph=lambda name: ObservationInput(env.observation_space, name=name),
+            q_func=model,
+            num_actions=env.action_space.n,
+            optimizer=tf.train.AdamOptimizer(learning_rate=5e-4),
+        )
+        # Create the replay buffer
+        replay_buffer = ReplayBuffer(50000)
+        # Create the schedule for exploration starting from 1 (every action is random) down to
+        # 0.02 (98% of actions are selected according to values predicted by the model).
+        exploration = LinearSchedule(schedule_timesteps=10000, initial_p=1.0, final_p=0.02)
+
+        # Initialize the parameters and copy them to the target network.
+        tf_util.initialize()
+        update_target()
+
+        episode_rewards = [0.0]
+        obs = env.reset()
+        for t in itertools.count():
+            # Take action and update exploration to the newest value
+            action = act(obs[None], update_eps=exploration.value(t))[0]
+            new_obs, rew, done, _ = env.step(action)
+            # Store transition in the replay buffer.
+            replay_buffer.add(obs, action, rew, new_obs, float(done))
+            obs = new_obs
+
+            episode_rewards[-1] += rew
+            if done:
+                obs = env.reset()
+                episode_rewards.append(0)
+
+            is_solved = t > 100 and np.mean(episode_rewards[-101:-1]) >= 200
+            if is_solved:
+                # Show off the result
+                env.render()
+            else:
+                # Minimize the error in Bellman's equation on a batch sampled from replay buffer.
+                if t > 1000:
+                    obses_t, actions, rewards, obses_tp1, dones = replay_buffer.sample(32)
+                    train(obses_t, actions, rewards, obses_tp1, dones, np.ones_like(rewards))
+                # Update target network periodically.
+                if t % 1000 == 0:
+                    update_target()
+
+            if done and len(episode_rewards) % 10 == 0:
+                logger.record_tabular("steps", t)
+                logger.record_tabular("episodes", len(episode_rewards))
+                logger.record_tabular("mean episode reward", round(np.mean(episode_rewards[-101:-1]), 1))
+                logger.record_tabular("% time spent exploring", int(100 * exploration.value(t)))
+                logger.dump_tabular()
+        """

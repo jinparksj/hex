@@ -26,11 +26,11 @@ class SixLeggedEnv(mujoco_env.MujocoEnv, utils.EzPickle):
         forward_reward = (xposafter - xposbefore)/self.dt
 
         # ctrl_cost = .01 * np.square(a).sum()
-        ctrl_cost = 0.5 * np.square(a).sum()
+        ctrl_cost = 0.5 * 1e-2 * np.square(a).sum()
         # contact_cost = 0.01 * 1e-3 * np.sum(np.square(np.clip(self.sim.data.cfrc_ext, -1, 1)))
         contact_cost = 0.5 * 1e-3 * np.sum(np.square(np.clip(self.sim.data.cfrc_ext, -1, 1)))
         # survive_reward = 0.1
-        survive_reward = 1.0
+        survive_reward = 0.05
         reward = forward_reward - ctrl_cost - contact_cost + survive_reward
 
         state = self.state_vector()
