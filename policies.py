@@ -3,6 +3,7 @@ from serializable import Serializable
 from contextlib import contextmanager
 from overrides import overrides
 import tensorflow as tf
+import numpy as np
 
 
 load_params = True
@@ -346,8 +347,8 @@ class StochasticNNPolicy(NNPolicy, Serializable):
                  name='policy'):
         Serializable.quick_init(self, locals())
 
-        self._action_dim = env_spec.action_space.flat_dim
-        self._observation_dim = env_spec.observation_space.flat_dim
+        self._action_dim = np.prod(env_spec.action_space.shape)
+        self._observation_dim = np.prod(env_spec.observation_space.shape)
         self._layer_sizes = list(hidden_layer_sizes) + [self._action_dim]
         self._squash = squash
         self._name = name

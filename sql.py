@@ -24,6 +24,7 @@ class SQLAlgorithm(object):
             qf,
             pool,
             sampler,
+            base_kwargs,
             n_epochs=1000,
             n_train_repeat=1,
             epoch_length=1000,
@@ -83,7 +84,6 @@ class SQLAlgorithm(object):
             save_full_state ('boolean'): If true, saves the full algorithm
                 state, including the replay buffer
         """
-
         self.env = env
         self.policy = policy
         self.qf = qf
@@ -114,8 +114,8 @@ class SQLAlgorithm(object):
         self._train_qf = train_qf
         self._train_policy = train_policy
 
-        self._observation_dim = self.env.observation_space.flat_dim
-        self._action_dim = self.env.action_space.flat_dim
+        self._observation_dim = np.prod(self.env.observation_space.shape)
+        self._action_dim = np.prod(self.env.action_space.shape)
 
         self._create_placeholders()
 

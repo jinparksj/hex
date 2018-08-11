@@ -1,7 +1,6 @@
 from distutils.version import StrictVersion
-
-import numpy as np
 import tensorflow as tf
+import numpy as np
 
 
 def adaptive_isotropic_gaussian_kernel(xs, ys, h_min=1e-3):

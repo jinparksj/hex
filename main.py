@@ -12,17 +12,16 @@ Usage Example:
     python main.py --legs 1 --render -roll 20 -max_time_step 2000
 """
 
+from kernel import adaptive_isotropic_gaussian_kernel
 from sql_replay_buffer import SimpleReplayBuffer
-from policies import StochasticNNPolicy
-from six_legged_env import SixLeggedEnv
 from value_functions import NNQFunction
+from policies import StochasticNNPolicy
 from sampler import SimpleSampler
 from sql import SQLAlgorithm
 import tensorflow.contrib.layers as layers
 import tensorflow as tf
 import argparse
-
-
+import gym
 
 SHARED_PARAMS = {
     'seed': [1, 2, 3],
@@ -141,18 +140,21 @@ if __name__ == '__main__':
     params = SHARED_PARAMS
     params.update(env_params)
 
-    env = SixLeggedEnv(args.legs)
-    policy = StochasticNNPolicy
-    qf = NNQFunction
-    pool = SimpleReplayBuffer
-    sampler = SimpleSampler
+    # env = SixLeggedEnv(args.legs)
+    env = gym.make('MyEnv-v0')
+    policy = StochasticNNPolicy(env.spec, hidden_layer_sizes=(128, 128))
+    qf = NNQFunction(env.spec, hidden_layer_sizes=(128, 128))
+    pool = SimpleReplayBuffer(env.spec, max_replay_buffer_size=1E6)
+    sampler = SimpleSampler(max_path_length = 1000,
+                            min_pool_size = 1E6,
+                            batch_size = 128)
 
     algo = SQLAlgorithm(
-           env,
-           policy,
-           qf,
-           pool,
-           sampler,
+           env=env,
+           policy=policy,
+           qf=qf,
+           pool=pool,
+           sampler=sampler,
            n_epochs=1000,
            n_train_repeat=1,
            epoch_length=1000,
