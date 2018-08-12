@@ -1,6 +1,8 @@
 import numpy as np
 from gym import utils
 from gym.envs.mujoco.mujoco_env import MujocoEnv
+from misc import sql_logger as logger
+from misc.overrides import overrides
 # from misc.serializable import Serializable
 import os
 
@@ -69,3 +71,16 @@ class SixLeggedEnv(MujocoEnv, utils.EzPickle):  # Serializable
 
     def viewer_setup(self):
         self.viewer.cam.distance = self.model.stat.extent * 0.5
+
+    @overrides
+    def log_diagnostics(self, paths):
+        progs = [
+            path["observations"][-1][-3] - path["observations"][0][-3]
+            for path in paths
+        ]
+        logger.record_tabular('AverageForwardProgress', np.mean(progs))
+        logger.record_tabular('MaxForwardProgress', np.max(progs))
+        logger.record_tabular('MinForwardProgress', np.min(progs))
+        logger.record_tabular('StdForwardProgress', np.std(progs))
+
+

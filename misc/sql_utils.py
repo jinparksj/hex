@@ -1,10 +1,11 @@
 from misc.serializable import Serializable
 
 def deep_clone(obj):
-    assert isinstance(obj, Serializable)
+    # assert isinstance(obj, Serializable)
 
     def maybe_deep_clone(o):
-        if isinstance(o, Serializable):
+        if True:
+            # if isinstance(o, Serializable):
             return deep_clone(o)
         else:
             return o

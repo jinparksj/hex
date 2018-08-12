@@ -4,8 +4,8 @@ import time
 
 
 def rollout(env, policy, path_length, render=False, speedup=None):
-    Da = env.action_space.flat_dim
-    Do = env.observation_space.flat_dim
+    Da = env.spec._kwargs['action_dim']
+    Do = env.spec._kwargs['observation_dim']
 
     observation = env.reset()
     policy.reset()
@@ -90,7 +90,7 @@ class Sampler(object):
         return self.pool.random_batch(self._batch_size)
 
     def terminate(self):
-        self.env.terminate()
+        self.env.close()  # Changed from terminate()
 
     def log_diagnostics(self):
         sql_logger.record_tabular('pool-size', self.pool.size)

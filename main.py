@@ -155,9 +155,9 @@ if __name__ == '__main__':
            qf=qf,
            pool=pool,
            sampler=sampler,
-           n_epochs=1000,
+           n_epochs=1,  # 1000
            n_train_repeat=1,
-           epoch_length=1000,
+           epoch_length=1,  # 1000
            eval_n_episodes=10,
            eval_render=False,
            plotter=None,
