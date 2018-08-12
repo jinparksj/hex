@@ -1,4 +1,4 @@
-from serializable import Serializable
+from misc.serializable import Serializable
 
 def deep_clone(obj):
     assert isinstance(obj, Serializable)

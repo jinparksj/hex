@@ -1,4 +1,4 @@
-from console import colorize
+from misc.console import colorize
 import inspect
 
 

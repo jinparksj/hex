@@ -1,11 +1,10 @@
-from kernel import adaptive_isotropic_gaussian_kernel
-from sql_utils import deep_clone
-from sampler import rollouts
+from misc.kernel import adaptive_isotropic_gaussian_kernel
+from misc.sql_utils import deep_clone
+from misc.sampler import rollouts
 import tensorflow as tf
-import sql_tf_utils
 import gtimer as gt
 import numpy as np
-import sql_logger
+from misc import sql_logger, sql_tf_utils
 
 
 class SQLAlgorithm(object):
@@ -24,7 +23,6 @@ class SQLAlgorithm(object):
             qf,
             pool,
             sampler,
-            base_kwargs,
             n_epochs=1000,
             n_train_repeat=1,
             epoch_length=1000,
@@ -114,8 +112,8 @@ class SQLAlgorithm(object):
         self._train_qf = train_qf
         self._train_policy = train_policy
 
-        self._observation_dim = np.prod(self.env.observation_space.shape)
-        self._action_dim = np.prod(self.env.action_space.shape)
+        self._observation_dim = env.spec._kwargs['observation_dim']
+        self._action_dim = env.spec._kwargs['action_dim']
 
         self._create_placeholders()
 
@@ -150,7 +148,9 @@ class SQLAlgorithm(object):
         self._init_training()
         self.sampler.initialize(env, policy, pool)
 
-        evaluation_env = deep_clone(env) if self._eval_n_episodes else None
+        # evaluation_env = deep_clone(env) if self._eval_n_episodes else None
+        # TO DO: use Ezpickle to deep_clone???
+        evaluation_env = env
 
         with sql_tf_utils.get_default_session().as_default():
             gt.rename_root('RLAlgorithm')
@@ -300,7 +300,7 @@ class SQLAlgorithm(object):
             n_action_samples=self._kernel_n_particles,
             reuse=True)
         sql_tf_utils.assert_shape(actions,
-                     [None, self._kernel_n_particles, self._action_dim])
+                                  [None, self._kernel_n_particles, self._action_dim])
 
         # SVGD requires computing two empirical expectations over actions
         # (see Appendix C1.1.). To that end, we first sample a single set of
@@ -316,7 +316,7 @@ class SQLAlgorithm(object):
         fixed_actions = tf.stop_gradient(fixed_actions)
         sql_tf_utils.assert_shape(fixed_actions, [None, n_fixed_actions, self._action_dim])
         sql_tf_utils.assert_shape(updated_actions,
-                     [None, n_updated_actions, self._action_dim])
+                                  [None, n_updated_actions, self._action_dim])
 
         svgd_target_values = self.qf.output_for(
             self._observations_ph[:, None, :], fixed_actions, reuse=True)
@@ -342,7 +342,7 @@ class SQLAlgorithm(object):
         action_gradients = tf.reduce_mean(
             kappa * grad_log_p + kernel_dict["gradient"], reduction_indices=1)
         sql_tf_utils.assert_shape(action_gradients,
-                     [None, n_updated_actions, self._action_dim])
+                                  [None, n_updated_actions, self._action_dim])
 
         # Propagate the gradient through the policy network (Equation 14).
         gradients = tf.gradients(

@@ -1,5 +1,5 @@
 import numpy as np
-import sql_logger
+from misc import sql_logger
 import time
 
 

@@ -1,5 +1,5 @@
 from cached_property import cached_property
-from serializable import Serializable
+from misc.serializable import Serializable
 import collections
 
 

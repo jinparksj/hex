@@ -1,8 +1,8 @@
 from enum import Enum
 
-from tabulate import tabulate
-from console import mkdir_p, colorize
-from autoargs import get_all_parameters
+from misc.tabulate import tabulate
+from misc.console import mkdir_p, colorize
+from misc.autoargs import get_all_parameters
 from contextlib import contextmanager
 import numpy as np
 import os

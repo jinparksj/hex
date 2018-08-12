@@ -1,16 +1,17 @@
 import numpy as np
 from gym import utils
 from gym.envs.mujoco.mujoco_env import MujocoEnv
-from serializable import Serializable
+# from misc.serializable import Serializable
 import os
 
 
-class SixLeggedEnv(MujocoEnv, utils.EzPickle, Serializable):
-    def __init__(self, legs, *args, **kwargs):
-        xml_path = os.path.split(os.path.realpath(__file__))[0]+'../models/silvia'+str(legs)+'.xml'
+class SixLeggedEnv(MujocoEnv, utils.EzPickle):  # Serializable
+    def __init__(self, legs=1, *args, **kwargs):
+        xml_path = os.path.split(os.path.realpath(__file__))[0].\
+            replace('envs/hex_env', '/models/silvia' + str(legs) + '.xml')
         MujocoEnv.__init__(self, xml_path, 5)
         utils.EzPickle.__init__(self)
-        Serializable.__init__(self, *args, **kwargs)
+        # Serializable.__init__(self, *args, **kwargs)
 
     def step(self, a):
         xposbefore = self.get_body_com("torso")[0]
