@@ -16,13 +16,13 @@ from misc.kernel import adaptive_isotropic_gaussian_kernel
 from replay_buff.sql_replay_buffer import SimpleReplayBuffer
 from q_v_funcs.value_functions import NNQFunction
 from policies.policies import StochasticNNPolicy
-from misc.sampler import SimpleSampler
+from replay_buff.sampler import SimpleSampler
 from algos.sql import SQLAlgorithm
 import tensorflow.contrib.layers as layers
 import tensorflow as tf
 import argparse
-import envs  # Needed to init envs
-import gym
+from envs.base.normalized_env import normalize
+from envs.base.gym_env import GymEnv
 
 SHARED_PARAMS = {
     'seed': [1, 2, 3],
@@ -141,7 +141,8 @@ if __name__ == '__main__':
     params = SHARED_PARAMS
     params.update(env_params)
 
-    env = gym.make('Hex1-v0')
+    # env = gym.make('Hex1-v0')
+    env = normalize(GymEnv('Hex1-v0', log_dir='/data'))
     policy = StochasticNNPolicy(env.spec, hidden_layer_sizes=(128, 128))
     qf = NNQFunction(env.spec, hidden_layer_sizes=(128, 128))
     pool = SimpleReplayBuffer(env.spec, max_replay_buffer_size=1E6)
@@ -155,9 +156,9 @@ if __name__ == '__main__':
            qf=qf,
            pool=pool,
            sampler=sampler,
-           n_epochs=10,  # 1000
+           n_epochs=1,  # 1000
            n_train_repeat=1,
-           epoch_length=1000,  # 1000
+           epoch_length=1,  # 1000
            eval_n_episodes=10,
            eval_render=False,
            plotter=None,

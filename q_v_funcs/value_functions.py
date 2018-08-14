@@ -1,5 +1,5 @@
-from misc.sql_tf_utils import get_default_session
-from misc.serializable import Serializable
+from utils.sql_tf_utils import get_default_session
+from utils.serializable import Serializable
 from policies.policies import MLPFunction
 import tensorflow as tf
 import numpy as np
@@ -36,8 +36,8 @@ class NNQFunction(MLPFunction):
                  name='q_function'):
         Serializable.quick_init(self, locals())
 
-        self._Da = env_spec._kwargs['action_dim']
-        self._Do = env_spec._kwargs['observation_dim']
+        self._Da = env_spec.action_flat_dim
+        self._Do = env_spec.observation_flat_dim
 
         self._observations_ph = tf.placeholder(
             tf.float32, shape=[None, self._Do], name='observations')

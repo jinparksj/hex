@@ -1,10 +1,8 @@
-from misc.sql_tf_utils import flatten_tensors, unflatten_tensors, get_default_session
-from misc.serializable import Serializable
+from utils.sql_tf_utils import flatten_tensors, unflatten_tensors, get_default_session
+from utils.serializable import Serializable
 from contextlib import contextmanager
 from misc.overrides import overrides
 import tensorflow as tf
-import numpy as np
-
 
 load_params = True
 
@@ -347,8 +345,8 @@ class StochasticNNPolicy(NNPolicy, Serializable):
                  name='policy'):
         Serializable.quick_init(self, locals())
 
-        self._action_dim = env_spec._kwargs['action_dim']
-        self._observation_dim = env_spec._kwargs['observation_dim']
+        self._action_dim = env_spec.action_flat_dim
+        self._observation_dim = env_spec.observation_flat_dim
         self._layer_sizes = list(hidden_layer_sizes) + [self._action_dim]
         self._squash = squash
         self._name = name

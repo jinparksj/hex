@@ -1,10 +1,11 @@
 from misc.kernel import adaptive_isotropic_gaussian_kernel
-from misc.sql_utils import deep_clone
-from misc.sampler import rollouts
+from replay_buff.sampler import rollouts
 import tensorflow as tf
 import gtimer as gt
 import numpy as np
-from misc import sql_logger, sql_tf_utils
+from misc import sql_logger
+from utils import sql_tf_utils
+from utils.sql_utils import deep_clone
 
 
 class SQLAlgorithm(object):
@@ -112,8 +113,8 @@ class SQLAlgorithm(object):
         self._train_qf = train_qf
         self._train_policy = train_policy
 
-        self._observation_dim = env.spec._kwargs['observation_dim']
-        self._action_dim = env.spec._kwargs['action_dim']
+        self._observation_dim = env.spec.observation_flat_dim
+        self._action_dim = env.spec.action_flat_dim
 
         self._create_placeholders()
 
@@ -148,9 +149,9 @@ class SQLAlgorithm(object):
         self._init_training()
         self.sampler.initialize(env, policy, pool)
 
-        # evaluation_env = deep_clone(env) if self._eval_n_episodes else None
+        evaluation_env = deep_clone(env) if self._eval_n_episodes else None
         # TODO: use Ezpickle to deep_clone???
-        evaluation_env = env
+        # evaluation_env = env
 
         with sql_tf_utils.get_default_session().as_default():
             gt.rename_root('RLAlgorithm')
@@ -221,11 +222,9 @@ class SQLAlgorithm(object):
         sql_logger.record_tabular('episode-length-std', np.std(episode_lengths))
 
         # TODO: figure out how to pass log_diagnostics through
-        '''
         evaluation_env.log_diagnostics(paths)
         if self._eval_render:
             evaluation_env.render(paths)
-        '''
 
         if self.sampler.batch_ready():
             batch = self.sampler.random_batch()

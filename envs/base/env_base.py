@@ -1,78 +1,7 @@
 from cached_property import cached_property
-from misc.serializable import Serializable
+from utils.serializable import Serializable
 import collections
-
-
-class Space(object):
-    """
-    Provides a classification state spaces and action spaces,
-    so you can write generic code that applies to any Environment.
-    E.g. to choose a random action.
-    """
-
-    def sample(self, seed=0):
-        """
-        Uniformly randomly sample a random elemnt of this space
-        """
-        raise NotImplementedError
-
-    def contains(self, x):
-        """
-        Return boolean specifying if x is a valid
-        member of this space
-        """
-        raise NotImplementedError
-
-    def flatten(self, x):
-        raise NotImplementedError
-
-    def unflatten(self, x):
-        raise NotImplementedError
-
-    def flatten_n(self, xs):
-        raise NotImplementedError
-
-    def unflatten_n(self, xs):
-        raise NotImplementedError
-
-    @property
-    def flat_dim(self):
-        """
-        The dimension of the flattened vector of the tensor representation
-        """
-        raise NotImplementedError
-
-    def new_tensor_variable(self, name, extra_dims):
-        """
-        Create a Theano tensor variable given the name and extra dimensions prepended
-        :param name: name of the variable
-        :param extra_dims: extra dimensions in the front
-        :return: the created tensor variable
-        """
-        raise NotImplementedError
-
-
-class EnvSpec(Serializable):
-
-    def __init__(
-            self,
-            observation_space,
-            action_space):
-        """
-        :type observation_space: Space
-        :type action_space: Space
-        """
-        Serializable.quick_init(self, locals())
-        self._observation_space = observation_space
-        self._action_space = action_space
-
-    @property
-    def observation_space(self):
-        return self._observation_space
-
-    @property
-    def action_space(self):
-        return self._action_space
+import numpy as np
 
 
 class Env(object):
@@ -158,6 +87,80 @@ class Env(object):
 
     def set_param_values(self, params):
         pass
+
+
+class ProxyEnv(Env, Serializable):
+    def __init__(self, wrapped_env):
+        Serializable.quick_init(self, locals())
+        self._wrapped_env = wrapped_env
+
+    @property
+    def wrapped_env(self):
+        return self._wrapped_env
+
+    def reset(self, **kwargs):
+        return self._wrapped_env.reset(**kwargs)
+
+    @property
+    def action_space(self):
+        return self._wrapped_env.action_space
+
+    @property
+    def observation_space(self):
+        return self._wrapped_env.observation_space
+
+    def step(self, action):
+        return self._wrapped_env.step(action)
+
+    def render(self, *args, **kwargs):
+        return self._wrapped_env.render(*args, **kwargs)
+
+    def log_diagnostics(self, paths, *args, **kwargs):
+        self._wrapped_env.log_diagnostics(paths, *args, **kwargs)
+
+    @property
+    def horizon(self):
+        return self._wrapped_env.horizon
+
+    def terminate(self):
+        self._wrapped_env.terminate()
+
+    def get_param_values(self):
+        return self._wrapped_env.get_param_values()
+
+    def set_param_values(self, params):
+        self._wrapped_env.set_param_values(params)
+
+
+class EnvSpec(Serializable):
+
+    def __init__(
+            self,
+            observation_space,
+            action_space):
+        """
+        :type observation_space: Space
+        :type action_space: Space
+        """
+        Serializable.quick_init(self, locals())
+        self._observation_space = observation_space
+        self._action_space = action_space
+
+    @property
+    def observation_space(self):
+        return self._observation_space
+
+    @property
+    def action_space(self):
+        return self._action_space
+
+    @property
+    def action_flat_dim(self):
+        return np.prod(self._action_space.low.shape)
+
+    @property
+    def observation_flat_dim(self):
+        return np.prod(self._observation_space.low.shape)
 
 
 _Step = collections.namedtuple("Step", ["observation", "reward", "done", "info"])

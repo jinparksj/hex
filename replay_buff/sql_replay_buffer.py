@@ -1,4 +1,4 @@
-from misc.serializable import Serializable
+from utils.serializable import Serializable
 import numpy as np
 import abc
 
@@ -91,8 +91,8 @@ class SimpleReplayBuffer(ReplayBuffer, Serializable):
         max_replay_buffer_size = int(max_replay_buffer_size)
 
         self._env_spec = env_spec
-        self._observation_dim = env_spec._kwargs['observation_dim']
-        self._action_dim = env_spec._kwargs['action_dim']
+        self._observation_dim = env_spec.observation_flat_dim
+        self._action_dim = env_spec.action_flat_dim
         self._max_buffer_size = max_replay_buffer_size
         self._observations = np.zeros((max_replay_buffer_size,
                                        self._observation_dim))
