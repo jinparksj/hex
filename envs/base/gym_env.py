@@ -123,12 +123,12 @@ class GymEnv(Env, Serializable):
         return Step(next_obs, reward, done, **info)
 
     def render(self, mode='human', close=False):
-        return self.env._render(mode, close)
+        return self.env.render()  # _render(mode, close)
         # self.env.render()
 
     def terminate(self):
         if self.monitoring:
-            self.env._close()
+            self.env.close()  # _close
             if self._log_dir is not None:
                 print("""
     ***************************

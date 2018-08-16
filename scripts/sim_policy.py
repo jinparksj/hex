@@ -1,3 +1,8 @@
+"""
+Example:
+    python sim_policy.py data/local/1l/test/1l-test-00/params.pkl
+"""
+
 import argparse
 
 import joblib
@@ -34,10 +39,6 @@ def simulate_policy(args):
                     animated=True, speedup=args.speedup)
 
 
-def main():
+if __name__ == "__main__":
     args = parse_args()
     simulate_policy(args)
-
-
-if __name__ == "__main__":
-    main()

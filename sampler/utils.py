@@ -18,9 +18,9 @@ def rollout(env, agent, max_path_length=np.inf, animated=False, speedup=1,
     while path_length < max_path_length:
         a, agent_info = agent.get_action(o)
         next_o, r, d, env_info = env.step(a)
-        observations.append(env.observation_space.flatten(o))
+        observations.append(tensor_utils.flatten_tensors(o))
         rewards.append(r)
-        actions.append(env.action_space.flatten(a))
+        actions.append(tensor_utils.flatten_tensors(a))
         agent_infos.append(agent_info)
         env_infos.append(env_info)
         path_length += 1

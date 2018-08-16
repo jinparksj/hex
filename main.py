@@ -7,6 +7,7 @@ Date: 31 July 2018
 
 Hierarchical Learning
 Model: Simplified Hexapod
+Framework: Credit goes to rllab at Berkeley
 
 Usage Example:
     python main.py --env 1 -n test
