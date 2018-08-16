@@ -22,6 +22,8 @@ Usage Example:
         where to run experiments ie local, AWS, etc
     --log_dir: (str)
         directory where to save data
+
+Notes: To see policy simulated see scripts dir for sim_policy.py
 """
 
 from misc.kernel import adaptive_isotropic_gaussian_kernel
