@@ -252,7 +252,7 @@ def log_parameters(log_file, args, classes):
 
 
 def stub_to_json(stub_sth):
-    from rllab.rllab.misc import instrument
+    from misc import instrument
     if isinstance(stub_sth, instrument.StubObject):
         assert len(stub_sth.args) == 0
         data = dict()

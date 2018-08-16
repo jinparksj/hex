@@ -8,8 +8,8 @@ import os
 
 
 class SixLeggedEnv(MujocoEnv, Serializable, utils.EzPickle):
-    def __init__(self, legs=1, *args, **kwargs):
-        xml_path = os.path.split(os.path.realpath(__file__))[0] + '/models/silvia' + str(legs) + '.xml'
+    def __init__(self, *args, **kwargs):
+        xml_path = os.path.split(os.path.realpath(__file__))[0] + '/models/silvia' + str(kwargs['legs']) + '.xml'
         MujocoEnv.__init__(self, xml_path, 5)
         utils.EzPickle.__init__(self)
         Serializable.__init__(self, *args, **kwargs)

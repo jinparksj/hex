@@ -1,5 +1,5 @@
 from misc.kernel import adaptive_isotropic_gaussian_kernel
-from replay_buff.sampler import rollouts
+from sampler.sampler import rollouts
 import tensorflow as tf
 import gtimer as gt
 import numpy as np
