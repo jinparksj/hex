@@ -29,7 +29,7 @@ Notes: To see policy simulated see launch_exp dir for sim_policy.py
 
 from schema.algos.sql.sql_kernel import adaptive_isotropic_gaussian_kernel
 from schema.replay_buff.replay_buffer import SimpleReplayBuffer
-from schema.q_v_funcs.value_functions import NNQFunction
+from schema.qv_funcs.value_functions import NNQFunction
 from schema.policies.policies import StochasticNNPolicy
 from schema.sampler.sampler import SimpleSampler
 from schema.algos.sql.sql import SQLAlgorithm
