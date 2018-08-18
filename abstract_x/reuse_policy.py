@@ -1,32 +1,4 @@
-#! usr/bin/env python
-
-"""
-Gabriel Fernandez
-github.com/gabriel80808
-Date: 31 July 2018
-
-Hierarchical Learning
-Model: Simplified Hexapod
-Framework: Credit goes to rllab at Berkeley
-
-Usage Example:
-    python train_algo.py --env 1 -n test
-
-    Parameters
-    -----------
-
-    --env: (int)
-        number of legs activated on the hexapod
-    --experiment_name, -n: (str)
-        name for experiment to be saved as
-    --mode: (str)
-        where to run experiments ie local, AWS, etc
-    --log_dir: (str)
-        directory where to save data
-
-Notes: To see policy simulated see launch_exp dir for sim_policy.py
-"""
-
+"""Example script for training from an existing Q-function and Policy"""
 from schema.algos.sql.sql_kernel import adaptive_isotropic_gaussian_kernel
 from schema.replay_buff.replay_buffer import SimpleReplayBuffer
 from schema.algos.sql.sql_instrument import run_sql_experiment
@@ -38,7 +10,9 @@ from schema.envs.base.normalized_env import normalize
 from schema.sampler.sampler import SimpleSampler
 from schema.algos.sql.sql import SQLAlgorithm
 from schema.envs.base.gym_env import GymEnv
+import tensorflow as tf
 import argparse
+import joblib
 
 SHARED_PARAMS = {
     'seed': [1, 2, 3],
@@ -49,7 +23,7 @@ SHARED_PARAMS = {
     'batch_size': 128,
     'max_pool_size': 1E6,
     'n_train_repeat': 1,
-    'epoch_length': 1000,
+    'epoch_length': 2,  # 1000
     'kernel_particles': 16,
     'kernel_update_ratio': 0.5,
     'value_n_particles': 16,
@@ -61,8 +35,8 @@ ENV_PARAMS = { # Envs for Hex see __init__ in envs dir
     1: {  # 3 DoF
         'prefix': '1l',
         'env_name': 'Hex1-v0',
-        'max_path_length': 1000,
-        'n_epochs': 500,
+        'max_path_length': 2,  # 1000
+        'n_epochs': 2,  # 500
         'reward_scale': 30,
     },
     2: {  # 6 DoF
@@ -133,6 +107,7 @@ AVAILABLE_ENVS = list(ENV_PARAMS.keys())
 def parse():
     """Pass in arguments form user for experiments"""
     parser = argparse.ArgumentParser()
+    parser.add_argument('file', type=str, help='Path to the snapshot file.')
     parser.add_argument('--env', type=int, choices=AVAILABLE_ENVS,
                         default=DEFAULT_ENV, help='No. of Legs')
     parser.add_argument('--exp_name', '-n', type=str, default=timestamp())
@@ -147,6 +122,7 @@ def get_variants(args):
     env_params = ENV_PARAMS[args.env]
     params = SHARED_PARAMS
     params.update(env_params)
+    params['file'] = args.file
 
     vg = VariantGenerator()
     for key, val in params.items():
@@ -170,36 +146,39 @@ def run_experiment(variant):
                             min_pool_size=variant['max_path_length'],
                             batch_size=variant['batch_size'])
 
-    M = variant['layer_size']
+    with tf.Session().as_default():
+        data = joblib.load(variant['file'])
+        if 'algo' in data.keys():
+            saved_qf = data['algo'].qf
+            saved_policy = data['algo'].policy
+        else:
+            saved_qf = data['qf']
+            saved_policy = data['policy']
 
-    qf = NNQFunction(env_spec=env.spec,
-                     hidden_layer_sizes=(M, M))
+        algorithm = SQLAlgorithm(epoch_length=variant['epoch_length'],
+                                 n_epochs=variant['n_epochs'],
+                                 n_train_repeat=variant['n_train_repeat'],
+                                 eval_render=False,
+                                 eval_n_episodes=1,
+                                 sampler=sampler,
+                                 env=env,
+                                 pool=pool,
+                                 qf=saved_qf,
+                                 policy=saved_policy,
+                                 kernel_fn=adaptive_isotropic_gaussian_kernel,
+                                 kernel_n_particles=variant['kernel_particles'],
+                                 kernel_update_ratio=variant['kernel_update_ratio'],
+                                 value_n_particles=variant['value_n_particles'],
+                                 td_target_update_interval=variant['td_target_update_interval'],
+                                 qf_lr=variant['qf_lr'],
+                                 policy_lr=variant['policy_lr'],
+                                 discount=variant['discount'],
+                                 reward_scale=variant['reward_scale'],
+                                 use_saved_qf=True,
+                                 use_saved_policy=True,
+                                 save_full_state=False)
 
-    policy = StochasticNNPolicy(env_spec=env.spec,
-                                hidden_layer_sizes=(M, M))
-
-    algorithm = SQLAlgorithm(epoch_length=variant['epoch_length'],
-                             n_epochs=variant['n_epochs'],
-                             n_train_repeat=variant['n_train_repeat'],
-                             eval_render=False,
-                             eval_n_episodes=1,
-                             sampler=sampler,
-                             env=env,
-                             pool=pool,
-                             qf=qf,
-                             policy=policy,
-                             kernel_fn=adaptive_isotropic_gaussian_kernel,
-                             kernel_n_particles=variant['kernel_particles'],
-                             kernel_update_ratio=variant['kernel_update_ratio'],
-                             value_n_particles=variant['value_n_particles'],
-                             td_target_update_interval=variant['td_target_update_interval'],
-                             qf_lr=variant['qf_lr'],
-                             policy_lr=variant['policy_lr'],
-                             discount=variant['discount'],
-                             reward_scale=variant['reward_scale'],
-                             save_full_state=False)
-
-    algorithm.train()
+        algorithm.train()
 
 
 def launch_experiments(variant_generator, args):
