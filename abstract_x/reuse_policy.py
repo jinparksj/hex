@@ -1,9 +1,9 @@
+#! usr/bin/env python
+
 """Example script for training from an existing Q-function and Policy"""
 from schema.algos.sql.sql_kernel import adaptive_isotropic_gaussian_kernel
 from schema.replay_buff.replay_buffer import SimpleReplayBuffer
 from schema.algos.sql.sql_instrument import run_sql_experiment
-from schema.qv_funcs.value_functions import NNQFunction
-from schema.policies.policies import StochasticNNPolicy
 from schema.utils.utils import timestamp, PROJECT_PATH
 from schema.launch_exp.variant import VariantGenerator
 from schema.envs.base.normalized_env import normalize
@@ -107,12 +107,12 @@ AVAILABLE_ENVS = list(ENV_PARAMS.keys())
 def parse():
     """Pass in arguments form user for experiments"""
     parser = argparse.ArgumentParser()
-    parser.add_argument('file', type=str, help='Path to the snapshot file.')
     parser.add_argument('--env', type=int, choices=AVAILABLE_ENVS,
                         default=DEFAULT_ENV, help='No. of Legs')
     parser.add_argument('--exp_name', '-n', type=str, default=timestamp())
     parser.add_argument('--mode', type=str, default='local')
     parser.add_argument('--log_dir', type=str, default=None)
+    parser.add_argument('--file', '-f', type=str, help='Path to the snapshot file.')
     args = parser.parse_args()
 
     return args
@@ -136,15 +136,16 @@ def get_variants(args):
 
 def run_experiment(variant):
     # TODO: shouldn't need to provide log_dir, bug
-    env = normalize(GymEnv(variant['env_name'],
-                           log_dir=PROJECT_PATH + "/data"))
+    env = normalize(GymEnv(variant['env_name'], log_dir=PROJECT_PATH + "/data"))
 
-    pool = SimpleReplayBuffer(env_spec=env.spec,
-                              max_replay_buffer_size=variant['max_pool_size'])
+    pool = SimpleReplayBuffer(
+        env_spec=env.spec,
+        max_replay_buffer_size=variant['max_pool_size'])
 
-    sampler = SimpleSampler(max_path_length=variant['max_path_length'],
-                            min_pool_size=variant['max_path_length'],
-                            batch_size=variant['batch_size'])
+    sampler = SimpleSampler(
+        max_path_length=variant['max_path_length'],
+        min_pool_size=variant['max_path_length'],
+        batch_size=variant['batch_size'])
 
     with tf.Session().as_default():
         data = joblib.load(variant['file'])
@@ -155,28 +156,29 @@ def run_experiment(variant):
             saved_qf = data['qf']
             saved_policy = data['policy']
 
-        algorithm = SQLAlgorithm(epoch_length=variant['epoch_length'],
-                                 n_epochs=variant['n_epochs'],
-                                 n_train_repeat=variant['n_train_repeat'],
-                                 eval_render=False,
-                                 eval_n_episodes=1,
-                                 sampler=sampler,
-                                 env=env,
-                                 pool=pool,
-                                 qf=saved_qf,
-                                 policy=saved_policy,
-                                 kernel_fn=adaptive_isotropic_gaussian_kernel,
-                                 kernel_n_particles=variant['kernel_particles'],
-                                 kernel_update_ratio=variant['kernel_update_ratio'],
-                                 value_n_particles=variant['value_n_particles'],
-                                 td_target_update_interval=variant['td_target_update_interval'],
-                                 qf_lr=variant['qf_lr'],
-                                 policy_lr=variant['policy_lr'],
-                                 discount=variant['discount'],
-                                 reward_scale=variant['reward_scale'],
-                                 use_saved_qf=True,
-                                 use_saved_policy=True,
-                                 save_full_state=False)
+        algorithm = SQLAlgorithm(
+            epoch_length=variant['epoch_length'],
+            n_epochs=variant['n_epochs'],
+            n_train_repeat=variant['n_train_repeat'],
+            eval_render=False,
+            eval_n_episodes=1,
+            sampler=sampler,
+            env=env,
+            pool=pool,
+            qf=saved_qf,
+            policy=saved_policy,
+            kernel_fn=adaptive_isotropic_gaussian_kernel,
+            kernel_n_particles=variant['kernel_particles'],
+            kernel_update_ratio=variant['kernel_update_ratio'],
+            value_n_particles=variant['value_n_particles'],
+            td_target_update_interval=variant['td_target_update_interval'],
+            qf_lr=variant['qf_lr'],
+            policy_lr=variant['policy_lr'],
+            discount=variant['discount'],
+            reward_scale=variant['reward_scale'],
+            use_saved_qf=True,
+            use_saved_policy=True,
+            save_full_state=False)
 
         algorithm.train()
 

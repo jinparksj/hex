@@ -49,7 +49,7 @@ SHARED_PARAMS = {
     'batch_size': 128,
     'max_pool_size': 1E6,
     'n_train_repeat': 1,
-    'epoch_length': 1000,
+    'epoch_length': 1000,  # 1000
     'kernel_particles': 16,
     'kernel_update_ratio': 0.5,
     'value_n_particles': 16,
@@ -160,44 +160,44 @@ def get_variants(args):
 
 def run_experiment(variant):
     # TODO: shouldn't need to provide log_dir, bug
-    env = normalize(GymEnv(variant['env_name'],
-                           log_dir=PROJECT_PATH + "/data"))
+    env = normalize(GymEnv(variant['env_name'], log_dir=PROJECT_PATH + "/data"))
 
-    pool = SimpleReplayBuffer(env_spec=env.spec,
-                              max_replay_buffer_size=variant['max_pool_size'])
+    pool = SimpleReplayBuffer(
+        env_spec=env.spec,
+        max_replay_buffer_size=variant['max_pool_size'])
 
-    sampler = SimpleSampler(max_path_length=variant['max_path_length'],
-                            min_pool_size=variant['max_path_length'],
-                            batch_size=variant['batch_size'])
+    sampler = SimpleSampler(
+        max_path_length=variant['max_path_length'],
+        min_pool_size=variant['max_path_length'],
+        batch_size=variant['batch_size'])
 
     M = variant['layer_size']
 
-    qf = NNQFunction(env_spec=env.spec,
-                     hidden_layer_sizes=(M, M))
+    qf = NNQFunction(env_spec=env.spec, hidden_layer_sizes=(M, M))
 
-    policy = StochasticNNPolicy(env_spec=env.spec,
-                                hidden_layer_sizes=(M, M))
+    policy = StochasticNNPolicy(env_spec=env.spec, hidden_layer_sizes=(M, M))
 
-    algorithm = SQLAlgorithm(epoch_length=variant['epoch_length'],
-                             n_epochs=variant['n_epochs'],
-                             n_train_repeat=variant['n_train_repeat'],
-                             eval_render=False,
-                             eval_n_episodes=1,
-                             sampler=sampler,
-                             env=env,
-                             pool=pool,
-                             qf=qf,
-                             policy=policy,
-                             kernel_fn=adaptive_isotropic_gaussian_kernel,
-                             kernel_n_particles=variant['kernel_particles'],
-                             kernel_update_ratio=variant['kernel_update_ratio'],
-                             value_n_particles=variant['value_n_particles'],
-                             td_target_update_interval=variant['td_target_update_interval'],
-                             qf_lr=variant['qf_lr'],
-                             policy_lr=variant['policy_lr'],
-                             discount=variant['discount'],
-                             reward_scale=variant['reward_scale'],
-                             save_full_state=False)
+    algorithm = SQLAlgorithm(
+        epoch_length=variant['epoch_length'],
+        n_epochs=variant['n_epochs'],
+        n_train_repeat=variant['n_train_repeat'],
+        eval_render=False,
+        eval_n_episodes=1,
+        sampler=sampler,
+        env=env,
+        pool=pool,
+        qf=qf,
+        policy=policy,
+        kernel_fn=adaptive_isotropic_gaussian_kernel,
+        kernel_n_particles=variant['kernel_particles'],
+        kernel_update_ratio=variant['kernel_update_ratio'],
+        value_n_particles=variant['value_n_particles'],
+        td_target_update_interval=variant['td_target_update_interval'],
+        qf_lr=variant['qf_lr'],
+        policy_lr=variant['policy_lr'],
+        discount=variant['discount'],
+        reward_scale=variant['reward_scale'],
+        save_full_state=True)
 
     algorithm.train()
 
